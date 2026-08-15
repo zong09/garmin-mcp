@@ -1,0 +1,17 @@
+[project]
+name = "garmin-mcp"
+version = "0.1.0"
+description = "MCP server exposing read-only Garmin Connect data"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "garminconnect>=0.3.10",
+    "mcp>=2.0.0",
+]
+
+[project.scripts]
+garmin-mcp = "garmin_mcp.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
