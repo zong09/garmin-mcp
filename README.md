@@ -54,8 +54,9 @@ own: metres, seconds, m/s, grams.
 Garmin itself. Mind three things:
 
 - **It takes kilograms**, while `get_body_composition` reads back grams.
-- `timestamp` is naive local time (`YYYY-MM-DDTHH:MM`) — a UTC offset is
-  silently dropped by the FIT encoder, so don't pass one.
+- `timestamp` (`YYYY-MM-DDTHH:MM`) is read in the **server's own timezone**, so
+  keep the host's clock on the zone your watch records in. An explicit offset is
+  honoured if given.
 - The FIT upload is asynchronous and de-duplicated by timestamp, so the return
   value proves nothing; verify with `get_body_composition`.
 

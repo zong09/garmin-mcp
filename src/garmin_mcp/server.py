@@ -7,7 +7,7 @@ kilograms instead, because that is what a scale reports.
 
 from __future__ import annotations
 
-from datetime import date as _date
+from datetime import datetime
 from typing import Any, Callable
 
 from mcp.server import MCPServer
@@ -30,7 +30,18 @@ mcp = MCPServer(
 
 
 def _day(value: str | None) -> str:
-    return value or _date.today().isoformat()
+    return value or datetime.now().date().isoformat()
+
+
+def _fit_time(timestamp: str | None) -> str:
+    """Normalise a timestamp for garminconnect's encoder.
+
+    The encoder runs it through time.mktime, which reads it as the host's local
+    time and drops any offset. Naive input is already host-local, so it passes
+    through; an offset, if given, is converted instead of being ignored.
+    """
+    moment = datetime.fromisoformat(timestamp) if timestamp else datetime.now()
+    return moment.astimezone().replace(tzinfo=None).isoformat()
 
 
 def _try(fn: Callable[..., Any], *args: Any) -> Any:
@@ -204,8 +215,8 @@ def add_body_composition(
     kilograms, `percent_*` are percentages. Note the asymmetry with
     get_body_composition, which reports weight in grams.
 
-    `timestamp` is naive local time, `YYYY-MM-DDTHH:MM`; a UTC offset is
-    silently discarded, so do not pass one. Omit it to mean now.
+    `timestamp` is `YYYY-MM-DDTHH:MM` in the server's own timezone. An explicit
+    offset is honoured if you pass one. Omit it to mean now.
 
     These are every field Garmin stores. Basal/active metabolism and visceral
     fat *mass* are deliberately absent: the FIT format carries them, but Garmin
@@ -219,7 +230,7 @@ def add_body_composition(
     """
     return prune(
         api().add_body_composition(
-            timestamp=timestamp,
+            timestamp=_fit_time(timestamp),
             weight=weight_kg,
             percent_fat=percent_fat,
             percent_hydration=percent_hydration,
