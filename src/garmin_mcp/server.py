@@ -194,25 +194,24 @@ def add_body_composition(
     bmi: float | None = None,
     bone_mass: float | None = None,
     muscle_mass: float | None = None,
-    basal_met: float | None = None,
-    active_met: float | None = None,
     visceral_fat_rating: float | None = None,
-    visceral_fat_mass: float | None = None,
     physique_rating: float | None = None,
     metabolic_age: float | None = None,
 ) -> dict[str, Any]:
     """Record a weigh-in, with optional body composition. Writes to Garmin.
 
     Units are the scale's own, not Garmin's: weight and the mass fields are
-    kilograms, `percent_*` are percentages, `basal_met`/`active_met` are
-    kcal/day. Note the asymmetry with get_body_composition, which reports weight
-    in grams.
+    kilograms, `percent_*` are percentages. Note the asymmetry with
+    get_body_composition, which reports weight in grams.
 
     `timestamp` is naive local time, `YYYY-MM-DDTHH:MM`; a UTC offset is
     silently discarded, so do not pass one. Omit it to mean now.
 
-    `visceral_fat_rating` is the unitless index most scales report. Only pass
-    `visceral_fat_mass` if the scale really reports a mass in kg.
+    These are every field Garmin stores. Basal/active metabolism and visceral
+    fat *mass* are deliberately absent: the FIT format carries them, but Garmin
+    drops them on import, so accepting them would imply they were saved.
+    Garmin's own BMR is `bmrKilocalories` in get_daily_summary, computed from
+    the user's profile rather than from any upload.
 
     The upload is asynchronous, so the returned import result does not prove the
     data landed — confirm with get_body_composition. Re-uploading the same
@@ -224,11 +223,8 @@ def add_body_composition(
             weight=weight_kg,
             percent_fat=percent_fat,
             percent_hydration=percent_hydration,
-            visceral_fat_mass=visceral_fat_mass,
             bone_mass=bone_mass,
             muscle_mass=muscle_mass,
-            basal_met=basal_met,
-            active_met=active_met,
             physique_rating=physique_rating,
             metabolic_age=metabolic_age,
             visceral_fat_rating=visceral_fat_rating,

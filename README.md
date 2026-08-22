@@ -59,10 +59,12 @@ Garmin itself. Mind three things:
 - The FIT upload is asynchronous and de-duplicated by timestamp, so the return
   value proves nothing; verify with `get_body_composition`.
 
-Garmin accepts weight, BMI, body fat %, water %, basal/active metabolism, bone
-mass, muscle mass, visceral fat (rating or mass), physique rating and metabolic
-age. Scales that also report **protein %** cannot upload it — Garmin has no
-such field.
+Garmin stores nine fields: weight, BMI, body fat %, water %, bone mass, muscle
+mass, visceral fat rating, physique rating and metabolic age. Three more that
+the FIT format carries — basal metabolism, active metabolism and visceral fat
+*mass* — are dropped by Garmin on import, so the tool does not accept them.
+Garmin's own BMR is `bmrKilocalories` in `get_daily_summary`, derived from your
+profile, not from an upload. **Protein %** has no Garmin field at all.
 
 `delete_weigh_in` exists because a FIT upload can't be edited in place; a
 mistyped entry has to be deleted and re-added.
