@@ -69,4 +69,5 @@ mistyped entry has to be deleted and re-added.
 
 Responses are trimmed before returning (`client.py`): nulls, empty values,
 internal ids and GMT duplicates are dropped, and embedded per-minute sample
-arrays are stripped so a summary call stays small.
+arrays are stripped so a summary call stays small. `get_body_composition` is
+exempt from that last rule — its weigh-in list is the payload, not telemetry.

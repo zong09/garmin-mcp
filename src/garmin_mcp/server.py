@@ -150,7 +150,9 @@ def get_activity(activity_id: str, include_splits: bool = False) -> dict[str, An
 @mcp.tool()
 def get_body_composition(start: str, end: str | None = None) -> dict[str, Any]:
     """Weight and body composition weigh-ins over a date range. Weight is grams."""
-    return compact(api().get_body_composition(start, end))
+    # prune, not compact: the weigh-in list *is* the payload here, so no_series
+    # would silently drop it once a range holds more than 12 entries.
+    return prune(api().get_body_composition(start, end))
 
 
 @mcp.tool()
