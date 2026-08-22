@@ -1,7 +1,7 @@
 [project]
 name = "garmin-mcp"
 version = "0.1.0"
-description = "MCP server exposing read-only Garmin Connect data"
+description = "MCP server exposing Garmin Connect data, plus manual weigh-in entry"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

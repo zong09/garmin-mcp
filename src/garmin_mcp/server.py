@@ -1,7 +1,8 @@
-"""Read-only MCP tools over Garmin Connect.
+"""MCP tools over Garmin Connect: reads, plus add/delete of weigh-ins.
 
-Units follow Garmin's own: distance in metres, duration in seconds, speed in
-metres/second, weight in grams.
+The read tools follow Garmin's own units: distance in metres, duration in
+seconds, speed in metres/second, weight in grams. add_body_composition takes
+kilograms instead, because that is what a scale reports.
 """
 
 from __future__ import annotations
@@ -18,9 +19,12 @@ mcp = MCPServer(
     name="garmin",
     version="0.1.0",
     instructions=(
-        "Read-only access to the signed-in user's Garmin Connect data. "
+        "Access to the signed-in user's Garmin Connect data. Every tool reads "
+        "except add_body_composition and delete_weigh_in, which change the "
+        "user's weigh-in history. "
         "Dates are ISO YYYY-MM-DD in the user's local timezone, as recorded by "
-        "the watch. Distances are metres, durations seconds, speeds m/s."
+        "the watch. Distances are metres, durations seconds, speeds m/s; reads "
+        "report weight in grams, but add_body_composition takes kilograms."
     ),
 )
 
@@ -177,6 +181,84 @@ def get_trend(metric: str, start: str, end: str) -> list[dict[str, Any]]:
     else:
         series = data
     return [prune(row) for row in series]
+
+
+@mcp.tool()
+def add_body_composition(
+    weight_kg: float,
+    timestamp: str | None = None,
+    percent_fat: float | None = None,
+    percent_hydration: float | None = None,
+    bmi: float | None = None,
+    bone_mass: float | None = None,
+    muscle_mass: float | None = None,
+    basal_met: float | None = None,
+    active_met: float | None = None,
+    visceral_fat_rating: float | None = None,
+    visceral_fat_mass: float | None = None,
+    physique_rating: float | None = None,
+    metabolic_age: float | None = None,
+) -> dict[str, Any]:
+    """Record a weigh-in, with optional body composition. Writes to Garmin.
+
+    Units are the scale's own, not Garmin's: weight and the mass fields are
+    kilograms, `percent_*` are percentages, `basal_met`/`active_met` are
+    kcal/day. Note the asymmetry with get_body_composition, which reports weight
+    in grams.
+
+    `timestamp` is naive local time, `YYYY-MM-DDTHH:MM`; a UTC offset is
+    silently discarded, so do not pass one. Omit it to mean now.
+
+    `visceral_fat_rating` is the unitless index most scales report. Only pass
+    `visceral_fat_mass` if the scale really reports a mass in kg.
+
+    The upload is asynchronous, so the returned import result does not prove the
+    data landed — confirm with get_body_composition. Re-uploading the same
+    timestamp is rejected as a duplicate.
+    """
+    return prune(
+        api().add_body_composition(
+            timestamp=timestamp,
+            weight=weight_kg,
+            percent_fat=percent_fat,
+            percent_hydration=percent_hydration,
+            visceral_fat_mass=visceral_fat_mass,
+            bone_mass=bone_mass,
+            muscle_mass=muscle_mass,
+            basal_met=basal_met,
+            active_met=active_met,
+            physique_rating=physique_rating,
+            metabolic_age=metabolic_age,
+            visceral_fat_rating=visceral_fat_rating,
+            bmi=bmi,
+        )
+    )
+
+
+@mcp.tool()
+def delete_weigh_in(date: str, sample_pk: str | None = None) -> dict[str, Any]:
+    """Delete a weigh-in. Destructive — this removes data from Garmin Connect.
+
+    Omit `sample_pk` when the day holds a single weigh-in. When it holds none or
+    several, nothing is deleted and the candidates are returned so you can
+    re-call with the samplePk you meant.
+    """
+    client = api()
+    if sample_pk is None:
+        day = client.get_daily_weigh_ins(date) or {}
+        entries = day.get("dateWeightList") or []
+        if len(entries) != 1:
+            return {
+                "deleted": False,
+                "date": date,
+                "reason": f"{len(entries)} weigh-ins on {date}; pass sample_pk",
+                "candidates": [
+                    pick(e, "samplePk", "weight", "sourceType") for e in entries
+                ],
+            }
+        sample_pk = str(entries[0]["samplePk"])
+    client.delete_weigh_in(sample_pk, date)
+    return {"deleted": True, "date": date, "sample_pk": sample_pk}
 
 
 def serve() -> None:
