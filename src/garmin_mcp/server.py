@@ -149,12 +149,43 @@ def list_activities(
 
 
 @mcp.tool()
-def get_activity(activity_id: str, include_splits: bool = False) -> dict[str, Any]:
-    """Full detail for one activity. Set `include_splits` to add per-lap data."""
-    out: dict[str, Any] = {"summary": compact(api().get_activity(activity_id))}
-    if include_splits:
-        splits = _try(api().get_activity_splits, activity_id)
-        out["splits"] = prune(splits) if splits else None
+def get_activity(activity_id: str, include: list[str] | None = None) -> dict[str, Any]:
+    """One activity's summary, plus any of these sections named in `include`:
+
+    splits, typed_splits, split_summaries, exercise_sets, weather, hr_zones,
+    power_zones, gear.
+
+    `exercise_sets` is the one to ask for on strength training — it carries the
+    reps and weight of every set. `typed_splits` separates intervals from rest
+    where plain `splits` runs them together.
+
+    A section that does not apply to the sport comes back near-empty instead of
+    failing, so asking for the wrong one is harmless but tells you nothing.
+
+    The per-second sample stream behind Garmin's charts is deliberately absent:
+    a 16-minute run is 600 KB of it. Export the activity from Garmin Connect if
+    you need that.
+    """
+    client = api()
+    sections: dict[str, Callable[[], Any]] = {
+        "splits": lambda: client.get_activity_splits(activity_id),
+        "typed_splits": lambda: client.get_activity_typed_splits(activity_id),
+        "split_summaries": lambda: client.get_activity_split_summaries(activity_id),
+        "exercise_sets": lambda: client.get_activity_exercise_sets(activity_id),
+        "weather": lambda: client.get_activity_weather(activity_id),
+        "hr_zones": lambda: client.get_activity_hr_in_timezones(activity_id),
+        "power_zones": lambda: client.get_activity_power_in_timezones(activity_id),
+        "gear": lambda: client.get_activity_gear(activity_id),
+    }
+    unknown = sorted(set(include or ()) - sections.keys())
+    if unknown:
+        raise ValueError(
+            f"Unknown section {', '.join(unknown)}; expected one of {', '.join(sections)}"
+        )
+
+    out: dict[str, Any] = {"summary": compact(client.get_activity(activity_id))}
+    for name in include or ():
+        out[name] = prune(_try(sections[name]))
     return prune(out)
 
 

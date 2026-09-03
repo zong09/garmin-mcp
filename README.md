@@ -36,7 +36,7 @@ claude mcp add garmin -- uv --directory /home/zong09/projects/garmin-mcp run gar
 | `get_sleep` | `date?` |
 | `get_health_metrics` | `date?` |
 | `list_activities` | `start`, `end?`, `activity_type?`, `limit=20` |
-| `get_activity` | `activity_id`, `include_splits=false` |
+| `get_activity` | `activity_id`, `include?` (splits, typed_splits, split_summaries, exercise_sets, weather, hr_zones, power_zones, gear) |
 | `get_body_composition` | `start`, `end?` |
 | `get_daily_weigh_ins` | `date` |
 | `get_trend` | `metric`, `start`, `end` |
