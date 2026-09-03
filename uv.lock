@@ -343,12 +343,14 @@ source = { editable = "." }
 dependencies = [
     { name = "garminconnect" },
     { name = "mcp" },
+    { name = "truststore" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "garminconnect", specifier = ">=0.3.10" },
     { name = "mcp", specifier = ">=2.0.0" },
+    { name = "truststore", specifier = ">=0.10" },
 ]
 
 [[package]]
