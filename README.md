@@ -38,6 +38,7 @@ claude mcp add garmin -- uv --directory /home/zong09/projects/garmin-mcp run gar
 | `list_activities` | `start`, `end?`, `activity_type?`, `limit=20` |
 | `get_activity` | `activity_id`, `include_splits=false` |
 | `get_body_composition` | `start`, `end?` |
+| `get_daily_weigh_ins` | `date` |
 | `get_trend` | `metric`, `start`, `end` |
 | `add_body_composition` | `weight_kg`, `timestamp?`, composition fields |
 | `delete_weigh_in` | `date`, `sample_pk?` |

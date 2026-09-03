@@ -167,6 +167,20 @@ def get_body_composition(start: str, end: str | None = None) -> dict[str, Any]:
 
 
 @mcp.tool()
+def get_daily_weigh_ins(date: str) -> dict[str, Any]:
+    """Every weigh-in recorded on one day, raw. Weight is grams.
+
+    Unlike get_body_composition, which reports one row per day, this lists each
+    entry separately — use it to tell duplicates apart, or to read the
+    sourceType and timestamps a single day's entries carry.
+    """
+    # Raw on purpose: this reads the endpoint the daily view uses, and prune's
+    # NOISE list drops every key containing "gmt" — exactly the fields worth
+    # comparing against calendarDate. A day's payload is small either way.
+    return api().get_daily_weigh_ins(date) or {}
+
+
+@mcp.tool()
 def get_trend(metric: str, start: str, end: str) -> list[dict[str, Any]]:
     """Daily time series for one metric across a date range.
 
